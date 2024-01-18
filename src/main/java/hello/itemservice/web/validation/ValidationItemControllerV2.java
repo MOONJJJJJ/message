@@ -43,7 +43,7 @@ public class ValidationItemControllerV2 {
         return "validation/v2/addForm";
     }
 
-    @PostMapping("/add")
+ //   @PostMapping("/add")
     public String addItemV1(@ModelAttribute Item item, BindingResult bindingResult,RedirectAttributes redirectAttributes, Model model) {
 
         if(!StringUtils.hasText(item.getItemName())){
@@ -61,6 +61,38 @@ public class ValidationItemControllerV2 {
             int resultPrice = item.getPrice() * item.getQuantity();
             if (resultPrice < 10000) {
                 bindingResult.addError(new ObjectError("item","가격*수량의 합은 10000원 이상. 현재 값 = "+resultPrice));
+            }
+        }
+
+        if(bindingResult.hasErrors()){
+
+            return "validation/v2/addForm";
+        }
+
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/validation/v2/items/{itemId}";
+    }
+
+    @PostMapping("/add")
+    public String addItemV2(@ModelAttribute Item item, BindingResult bindingResult,RedirectAttributes redirectAttributes, Model model) {
+
+        if(!StringUtils.hasText(item.getItemName())){
+            bindingResult.addError(new FieldError("item","itemName",item.getItemName(),false,null,null,"상품명은 필수입니다."));
+        }
+
+        if(item.getPrice()==null || item.getPrice() < 1000 || item.getPrice() > 1000000){
+            bindingResult.addError(new FieldError("item","price",item.getPrice(),false,null,null,"가격은 천원에서 백만원 사이"));
+        }
+        if(item.getQuantity()==null || item.getQuantity() >= 9999){
+            bindingResult.addError(new FieldError("item","quantity",item.getQuantity(),false,null,null,"수량은 최대 9999까지허용 "));
+        }
+
+        if (item.getPrice() != null && item.getQuantity() != null) {
+            int resultPrice = item.getPrice() * item.getQuantity();
+            if (resultPrice < 10000) {
+                bindingResult.addError(new ObjectError("item",null,null,"가격*수량의 합은 10000원 이상. 현재 값 = "+resultPrice));
             }
         }
 
